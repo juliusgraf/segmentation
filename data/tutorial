@@ -1,0 +1,3 @@
+- Aller sur https://www.kaggle.com/competitions/carvana-image-masking-challenge/data
+- Télécharger train.zip et train_masks.zip puis transférér les images dans train_images et train_masks
+- Prendre les 48 dernières images de train_images et 48 dernier masques de train_masks et respectivement les stocker dans val_images et val_masks
