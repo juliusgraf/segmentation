@@ -49,11 +49,11 @@ def train_fn(loader, model, optimizer, loss_fn, lr_scheduler):#train_fn(loader, 
         jacobian_loss = torch.maximum(jacobian_norm, torch.ones_like(jacobian_norm)-EPS_JACOBIAN_LOSS).mean()
         
         loss += JACOBIAN_LOSS_WEIGHT * jacobian_loss
-        
+        loss=loss.mean() #ajouter pour enlever le scaler
         # Backward
         optimizer.zero_grad()
-        # scaler.scale(loss).backward()
-        # scaler.step(optimizer)
+        loss.backward()# scaler.scale(loss).backward()
+        optimizer.step() # scaler.step(optimizer)
         # scaler.update()
         lr_scheduler.step()
         # Update tqdm loop
@@ -102,7 +102,7 @@ def main():
         train_transform,
         val_transform
     )
-    print('ok je suis là')
+
     if LOAD_MODEL:
         load_checkpoint(torch.load("my_checkpoint.pth.tar"), model)
     
