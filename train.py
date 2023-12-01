@@ -24,10 +24,10 @@ JACOBIAN_LOSS_WEIGHT = 1e-5
 EPS_JACOBIAN_LOSS = 0.01
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 16
-NUM_EPOCHS = 3
+NUM_EPOCHS = 1
 NUM_WORKERS = 2
-IMAGE_HEIGHT = 160 # 1280 originally
-IMAGE_WIDTH = 240 # 1918 originally
+IMAGE_HEIGHT = 32 # 1280 originally
+IMAGE_WIDTH = 48 # 1918 originally
 PIN_MEMORY = True
 LOAD_MODEL = False
 TRAIN_IMG_DIR = "data/train_images/"
@@ -35,25 +35,26 @@ TRAIN_MASK_DIR = "data/train_masks/"
 VAL_IMG_DIR = "data/val_images/"
 VAL_MASK_DIR = "data/val_masks/"
 
-def train_fn(loader, model, optimizer, loss_fn, scaler, lr_scheduler):
+def train_fn(loader, model, optimizer, loss_fn, lr_scheduler):#train_fn(loader, model, optimizer, loss_fn, scaler, lr_scheduler)
     loop = tqdm(loader)
     for batch_index, (data, targets) in enumerate(loop):
         data = data.to(device = DEVICE)
         targets = targets.float().unsqueeze(1).to(device = DEVICE)
         
         # Forward
-        with torch.cuda.amp.autocast():
-            predictions = model(data)
-            loss = loss_fn(predictions, targets)
-            jacobian_norm = jacobian_spectral_norm(data, predictions, interpolation=False, training=True)
-            jacobian_loss = torch.maximum(jacobian_norm, torch.ones_like(jacobian_norm)-EPS_JACOBIAN_LOSS)
-            loss += JACOBIAN_LOSS_WEIGHT * jacobian_loss
+        #with torch.cuda.amp.autocast():
+        predictions = model(data)
+        loss = loss_fn(predictions, targets)
+        jacobian_norm = jacobian_spectral_norm(data, predictions, interpolation=False, training=True)
+        jacobian_loss = torch.maximum(jacobian_norm, torch.ones_like(jacobian_norm)-EPS_JACOBIAN_LOSS).mean()
+        
+        loss += JACOBIAN_LOSS_WEIGHT * jacobian_loss
         
         # Backward
         optimizer.zero_grad()
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+        # scaler.scale(loss).backward()
+        # scaler.step(optimizer)
+        # scaler.update()
         lr_scheduler.step()
         # Update tqdm loop
         loop.set_postfix(loss = loss.item())
@@ -101,13 +102,14 @@ def main():
         train_transform,
         val_transform
     )
+    print('ok je suis là')
     if LOAD_MODEL:
         load_checkpoint(torch.load("my_checkpoint.pth.tar"), model)
     
-    scaler = torch.cuda.amp.GradScaler()
+    #scaler = torch.cuda.amp.GradScaler()
     
     for epoch in range(NUM_EPOCHS):
-        train_fn(train_loader, model, optimizer, loss_fn, scaler, lr_scheduler)
+        train_fn(train_loader, model, optimizer, loss_fn, lr_scheduler)#train_fn(train_loader, model, optimizer, loss_fn, scaler, lr_scheduler)
 
         # Add scheduler to the model
         # Save model
