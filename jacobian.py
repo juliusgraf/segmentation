@@ -20,7 +20,7 @@ def jacobian_spectral_norm(y_in, x_hat, interpolation=True, training=False, max_
       zer_pad = torch.zeros_like(x_hat)
       y_in = torch.cat((y_in, zer_pad[:,y_in.shape[1]:,...]), 1)
 
-    y = 2. * x_hat - y_in  # Beware notation: y_in = input, x_hat = output network
+    y=x_hat #y = 2. * x_hat - y_in  # Beware notation: y_in = input, x_hat = output network
 
     u = torch.randn_like(x)
     u = u / torch.norm(u, p=2)
